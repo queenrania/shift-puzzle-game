@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { getPuzzleImage } from "../api/picsum.js";
 
-// Fetches a puzzle image and tracks loading and error states.
-// status is "loading", "ready", or "error".
+// Fetches a puzzle image and tracks loading and error states with status is "loading", "ready", or "error".
 export default function usePuzzleImage() {
   const [image, setImage] = useState(null);
   const [status, setStatus] = useState("loading");

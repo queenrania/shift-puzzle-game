@@ -1,7 +1,4 @@
-// Pure puzzle logic: no React, no DOM. Every function takes data in
-// and returns new data out, which makes it easy to test and reuse.
-//
-// A board is a flat array read left to right, top to bottom.
+// Using a flat array reading left to right, top to bottom.
 // Tile values run 1..(size*size - 1). The empty space is 0.
 // Solved 3x3: [1, 2, 3, 4, 5, 6, 7, 8, 0]
 
@@ -51,7 +48,7 @@ export function shuffleBoard(size, moveCount) {
     previousEmpty = emptyIndex;
   }
 
-  // Rare, but a random walk can land back on solved. Try again if so.
+  // On the rare occurrence that a random walk can land back on solved. Try again if so.
   return isSolved(tiles) ? shuffleBoard(size, moveCount) : tiles;
 }
 

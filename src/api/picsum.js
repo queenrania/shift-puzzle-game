@@ -2,8 +2,7 @@ import { IMAGE_SIZE } from "../config.js";
 
 const PICSUM_BASE = "https://picsum.photos";
 
-// Resolves once the browser has fully downloaded the image,
-// so the game never starts with a half-loaded picture.
+// This waits for the image to load so the game never starts with a half-loaded picture.
 function preloadImage(src) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -13,8 +12,7 @@ function preloadImage(src) {
   });
 }
 
-// The one place the game asks "which picture should I use?"
-// Later, swap the inside of this function to return your own artwork.
+// The one place the game asks "which picture should I use?" After this project, will switch out for my own images.
 export async function getPuzzleImage(size = IMAGE_SIZE) {
   const page = Math.floor(Math.random() * 10) + 1;
   const response = await fetch(`${PICSUM_BASE}/v2/list?page=${page}&limit=30`);

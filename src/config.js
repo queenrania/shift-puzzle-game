@@ -17,3 +17,12 @@ export const SCORING = {
 export const SHUFFLE_MOVES = 150;
 
 export const IMAGE_SIZE = 600; // px, requested from the image API
+
+export const MAX_SCORES_PER_LEVEL = 10;
+
+export const STORAGE_KEYS = {
+  playerName: "puzzle-game:playerName",
+  level: "puzzle-game:level",
+  timed: "puzzle-game:timed",
+  stats: "puzzle-game:stats",
+};
