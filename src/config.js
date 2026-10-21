@@ -25,4 +25,5 @@ export const STORAGE_KEYS = {
   level: "puzzle-game:level",
   timed: "puzzle-game:timed",
   stats: "puzzle-game:stats",
+  currentGame: "puzzle-game:currentGame", // sessionStorage
 };

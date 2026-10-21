@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 
-// Counts in seconds while isRunning is true. Used for relaxed mode,
-// where there's no time limit but so you can see see how long it took.
-export default function useStopwatch(isRunning) {
-  const [elapsed, setElapsed] = useState(0);
+// Counts up once a second while isRunning is true. Used for relaxed mode,
+// where there's no time limit but it's still fun to see how long you took.
+// startAt lets a resumed game pick up where it left off.
+export default function useStopwatch(isRunning, startAt = 0) {
+  const [elapsed, setElapsed] = useState(startAt);
 
   useEffect(() => {
     if (!isRunning) return;

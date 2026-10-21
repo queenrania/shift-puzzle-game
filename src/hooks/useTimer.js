@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 
 // A countdown that ticks once a second while isRunning is true.
 // It stops on its own at zero and reports isExpired.
-export default function useTimer(initialSeconds, isRunning) {
-  const [timeRemaining, setTimeRemaining] = useState(initialSeconds);
+// startAt lets a resumed game pick up where it left off.
+export default function useTimer(initialSeconds, isRunning, startAt = initialSeconds) {
+  const [timeRemaining, setTimeRemaining] = useState(startAt);
   const isExpired = timeRemaining === 0;
 
   useEffect(() => {

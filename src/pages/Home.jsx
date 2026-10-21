@@ -1,9 +1,17 @@
+import { useEffect } from "react";
 import { Link } from "react-router";
+import { clearSavedGame } from "../game/savedGame.js";
 import usePlayer from "../hooks/usePlayer.js";
 import { GAME_TITLE, LEVELS } from "../config.js";
 
 export default function Home() {
   const { playerName, setPlayerName, level, setLevel, timed, setTimed } = usePlayer();
+
+  // Coming back to Home ends any puzzle in progress,
+  // so Start always begins a fresh game.
+  useEffect(() => {
+    clearSavedGame();
+  }, []);
 
   return (
     <main className="home">

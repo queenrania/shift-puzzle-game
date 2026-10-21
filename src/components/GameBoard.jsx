@@ -1,9 +1,10 @@
 import { isAdjacent, getTileBackgroundPosition } from "../game/puzzle.js";
 
-// Tiles are drawn in by tile number in a fixed order and positioned with CSS transforms.
-// Because each tile's DOM element never moves, changing its transform lets CSS animate the slide.
+// Tiles are drawn in a fixed order (by tile number) and positioned with
+// CSS transforms. Because each tile's DOM element never moves, changing its
+// transform lets CSS animate the slide.
 //
-// If imageUrl is missing, tiles show numbers instead (offline fallback).
+// If imageUrl is missing, tiles show their numbers instead (offline fallback).
 export default function GameBoard({ tiles, size, imageUrl, onTileClick }) {
   const emptyIndex = tiles.indexOf(0);
 

@@ -6,6 +6,7 @@ import useStopwatch from "../hooks/useStopwatch.js";
 import usePlayer from "../hooks/usePlayer.js";
 import GameBoard from "../components/GameBoard.jsx";
 import Timer from "../components/Timer.jsx";
+import ImagePreview from "../components/ImagePreview.jsx";
 import { LEVELS, SHUFFLE_MOVES } from "../config.js";
 import { calculateScore } from "../game/scoring.js";
 import {
@@ -14,6 +15,7 @@ import {
   shuffleBoard,
   getTileIndexForArrow,
 } from "../game/puzzle.js";
+import { loadSavedGame, saveGame, clearSavedGame } from "../game/savedGame.js";
 
 function newBoard(size) {
   return { tiles: shuffleBoard(size, SHUFFLE_MOVES), moves: 0 };
@@ -37,24 +39,38 @@ function togglePause(prev) {
 
 export default function Game() {
   const navigate = useNavigate();
-  const { image, status, error, retry } = usePuzzleImage();
   const { level, timed, recordGame } = usePlayer();
   const { size, timeLimit } = LEVELS[level];
-  const [board, setBoard] = useState(() => newBoard(size));
-  const [useNumbers, setUseNumbers] = useState(false); // offline fallback
+
+  // If the page was refreshed mid-game, pick up where the player left off.
+  const [saved] = useState(() => loadSavedGame(level, timed));
+
+  const { image, status, error, retry } = usePuzzleImage(saved?.image ?? null);
+  const [board, setBoard] = useState(() =>
+    saved ? { tiles: saved.tiles, moves: saved.moves } : newBoard(size)
+  );
+  const [useNumbers, setUseNumbers] = useState(saved?.useNumbers ?? false);
   const hasRecorded = useRef(false); // makes sure each game is saved only once
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   // "idle" until the first move, then "playing" or "paused".
-  const [gameStatus, setGameStatus] = useState("idle");
+  // A resumed game starts paused so the clock doesn't run while the page reloads.
+  const [gameStatus, setGameStatus] = useState(
+    saved && saved.moves > 0 ? "paused" : "idle"
+  );
   const isPlaying = gameStatus === "playing";
 
   // Both clocks exist (hooks can't be called conditionally),
   // but only the one for the current mode ever runs.
   const { timeRemaining, isExpired, reset: resetTimer } = useTimer(
     timeLimit,
-    timed && isPlaying
+    timed && isPlaying,
+    saved?.timeRemaining
   );
-  const { elapsed, reset: resetStopwatch } = useStopwatch(!timed && isPlaying);
+  const { elapsed, reset: resetStopwatch } = useStopwatch(
+    !timed && isPlaying,
+    saved?.elapsed
+  );
 
   function handleMove(index) {
     if (gameStatus === "paused") return;
@@ -74,6 +90,7 @@ export default function Game() {
   }
 
   function handleNewImage() {
+    clearSavedGame(); // the old picture shouldn't come back on refresh
     setUseNumbers(false);
     retry();
     restartGame();
@@ -88,7 +105,7 @@ export default function Game() {
 
   // Keyboard: arrows move tiles, P or Escape toggles pause.
   useEffect(() => {
-    if (!canPlay) return;
+    if (!canPlay || isPreviewOpen) return; // the preview handles its own keys
 
     function handleKeyDown(event) {
       if (event.key === "p" || event.key === "P" || event.key === "Escape") {
@@ -106,7 +123,7 @@ export default function Game() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [canPlay, gameStatus, size]);
+  }, [canPlay, isPreviewOpen, gameStatus, size]);
 
   // Auto-pause if the player switches tabs or minimizes the window.
   useEffect(() => {
@@ -121,10 +138,26 @@ export default function Game() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [gameStatus]);
 
+  // Keep a copy of the game in progress so a refresh can resume it.
+  useEffect(() => {
+    if (!canPlay || hasRecorded.current || isSolved(board.tiles)) return;
+    saveGame({
+      level,
+      timed,
+      tiles: board.tiles,
+      moves: board.moves,
+      timeRemaining,
+      elapsed,
+      useNumbers,
+      image: useNumbers ? null : image,
+    });
+  }, [canPlay, board, timeRemaining, elapsed, useNumbers, image, level, timed]);
+
   // Saves the result once, then shows Game Over.
   function finishGame(game) {
     if (hasRecorded.current) return;
     hasRecorded.current = true;
+    clearSavedGame();
     const { isNewHighScore, newAchievements } = recordGame(game);
     navigate("/game-over", {
       replace: true,
@@ -246,7 +279,29 @@ export default function Game() {
 
       <div className="game-footer">
         {imageUrl && (
-          <img src={imageUrl} alt="Finished picture" className="goal-preview" />
+          <button
+            type="button"
+            className="goal-preview"
+            onClick={() => setIsPreviewOpen(true)}
+            disabled={isPaused}
+            aria-label="View the finished picture larger"
+          >
+            <img src={imageUrl} alt="" />
+            <svg
+              className="goal-preview-icon"
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="6" />
+              <path d="M20 20l-4.5-4.5" />
+            </svg>
+          </button>
         )}
         <button type="button" className="button-secondary" onClick={restartGame}>
           Shuffle
@@ -255,6 +310,14 @@ export default function Game() {
           {useNumbers ? "Try images again" : "New image"}
         </button>
       </div>
+
+      {imageUrl && (
+        <ImagePreview
+          imageUrl={imageUrl}
+          open={isPreviewOpen}
+          onClose={() => setIsPreviewOpen(false)}
+        />
+      )}
 
       {imageUrl ? (
         <p className="credit">
