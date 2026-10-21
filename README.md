@@ -1,4 +1,4 @@
-# Shift Puzzle
+# Shift Squares
 
 A sliding tile puzzle built with React. Each game pulls a random photo, slices it into tiles, and scrambles them. Slide the pieces back into place to rebuild the picture.
 

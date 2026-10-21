@@ -653,3 +653,16 @@ button {
   text-align: center;
   padding: 0 6px;
 }
+
+/* ---------- Logo ---------- */
+
+.logo-heading {
+  margin: 0 0 12px;
+}
+
+.logo-heading img {
+  display: block;
+  height: 56px;
+  width: auto;
+  max-width: 100%;
+}

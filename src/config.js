@@ -1,6 +1,6 @@
 // Tunable game values live here so they're easy to change in one place.
 // Rename the game by changing GAME_TITLE.
-export const GAME_TITLE = "Untitled Puzzle";
+export const GAME_TITLE = "ShiftSquares";
 
 export const LEVELS = {
   easy: { label: "Easy", size: 3, timeLimit: 120 },

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "react-router";
 import { clearSavedGame } from "../game/savedGame.js";
+import logo from "../assets/logo.svg";
 import usePlayer from "../hooks/usePlayer.js";
 import { GAME_TITLE, LEVELS } from "../config.js";
 
@@ -16,7 +17,9 @@ export default function Home() {
   return (
     <main className="home">
       <div className="home-intro">
-        <h1>{GAME_TITLE}</h1>
+        <h1 className="logo-heading">
+          <img src={logo} alt={GAME_TITLE} />
+        </h1>
         <p className="tagline">Slide the tiles. Rebuild the picture.</p>
       </div>
 
