@@ -666,3 +666,142 @@ button {
   width: auto;
   max-width: 100%;
 }
+
+/* ---------- Mode label on the game screen ---------- */
+
+.mode-pill {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #3a2b12;
+  color: #ffc47a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mode-pill--relaxed {
+  background: #1f2b2a;
+  color: #8fd9cc;
+}
+
+/* ---------- Solved celebration ---------- */
+
+.board {
+  overflow: hidden;
+  transition: box-shadow 450ms ease;
+}
+
+/* Closing the gaps turns the tiles back into one seamless picture */
+.board--solved {
+  --gap: 0px;
+  box-shadow:
+    0 0 0 3px var(--accent),
+    0 0 40px rgba(242, 165, 65, 0.35);
+}
+
+.board--solved .tile {
+  border-radius: 0;
+  outline: none;
+  cursor: default;
+  transition:
+    transform 450ms ease,
+    width 450ms ease,
+    top 450ms ease,
+    left 450ms ease,
+    border-radius 450ms ease;
+}
+
+.tile--final {
+  animation: final-piece-in 450ms ease 250ms both;
+}
+
+@keyframes final-piece-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.solved-banner {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px 20px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  animation: banner-in 400ms ease 500ms both;
+}
+
+.solved-banner h2 {
+  margin: 0;
+  font-size: 26px;
+  color: var(--accent);
+}
+
+.solved-banner p {
+  margin: 2px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.solved-countdown {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 4px;
+  width: 100%;
+  background: var(--accent);
+  transform-origin: left;
+  animation: countdown linear both;
+}
+
+@keyframes banner-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes countdown {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.result-image {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 0 0 3px var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .board,
+  .board--solved .tile {
+    transition: none;
+  }
+
+  .tile--final,
+  .solved-banner {
+    animation: none;
+  }
+}
+
+/* The footer uses display: flex, so the hidden attribute needs a little help */
+.game-footer[hidden] {
+  display: none;
+}

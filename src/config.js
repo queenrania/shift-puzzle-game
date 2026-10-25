@@ -16,6 +16,9 @@ export const SCORING = {
 
 export const SHUFFLE_MOVES = 150;
 
+// How long the solved picture stays up before the results screen
+export const SOLVED_DELAY_MS = 5000;
+
 export const IMAGE_SIZE = 600; // px, requested from the image API
 
 export const MAX_SCORES_PER_LEVEL = 10;

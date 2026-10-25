@@ -7,7 +7,8 @@ import usePlayer from "../hooks/usePlayer.js";
 import GameBoard from "../components/GameBoard.jsx";
 import Timer from "../components/Timer.jsx";
 import ImagePreview from "../components/ImagePreview.jsx";
-import { LEVELS, SHUFFLE_MOVES } from "../config.js";
+import { LEVELS, SHUFFLE_MOVES, SOLVED_DELAY_MS } from "../config.js";
+import formatTime from "../game/formatTime.js";
 import { calculateScore } from "../game/scoring.js";
 import {
   moveTile,
@@ -58,7 +59,10 @@ export default function Game() {
   const [gameStatus, setGameStatus] = useState(
     saved && saved.moves > 0 ? "paused" : "idle"
   );
-  const isPlaying = gameStatus === "playing";
+  // Solved is worked out from the board itself, so it can't get out of sync.
+  const isBoardSolved = board.moves > 0 && isSolved(board.tiles);
+  const isPlaying = gameStatus === "playing" && !isBoardSolved; // clock stops on solve
+  const resultRef = useRef(null); // the finished game, ready for the results screen
 
   // Both clocks exist (hooks can't be called conditionally),
   // but only the one for the current mode ever runs.
@@ -73,7 +77,7 @@ export default function Game() {
   );
 
   function handleMove(index) {
-    if (gameStatus === "paused") return;
+    if (gameStatus === "paused" || isBoardSolved) return;
     setBoard((prev) => applyMove(prev, index, size));
     if (gameStatus === "idle") setGameStatus("playing"); // timer starts on first move
   }
@@ -102,10 +106,11 @@ export default function Game() {
   }
 
   const canPlay = status === "ready" || useNumbers;
+  const imageUrl = useNumbers ? null : image?.url;
 
   // Keyboard: arrows move tiles, P or Escape toggles pause.
   useEffect(() => {
-    if (!canPlay || isPreviewOpen) return; // the preview handles its own keys
+    if (!canPlay || isPreviewOpen || isBoardSolved) return; // the preview handles its own keys
 
     function handleKeyDown(event) {
       if (event.key === "p" || event.key === "P" || event.key === "Escape") {
@@ -123,7 +128,7 @@ export default function Game() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [canPlay, isPreviewOpen, gameStatus, size]);
+  }, [canPlay, isPreviewOpen, isBoardSolved, gameStatus, size]);
 
   // Auto-pause if the player switches tabs or minimizes the window.
   useEffect(() => {
@@ -153,26 +158,34 @@ export default function Game() {
     });
   }, [canPlay, board, timeRemaining, elapsed, useNumbers, image, level, timed]);
 
-  // Saves the result once, then shows Game Over.
-  function finishGame(game) {
-    if (hasRecorded.current) return;
+  // Saves the result once and keeps it ready for the results screen.
+  function recordResult(game) {
+    if (hasRecorded.current) return null;
     hasRecorded.current = true;
     clearSavedGame();
     const { isNewHighScore, newAchievements } = recordGame(game);
-    navigate("/game-over", {
-      replace: true,
-      state: { ...game, isNewHighScore, newAchievements },
-    });
+    resultRef.current = {
+      ...game,
+      isNewHighScore,
+      newAchievements,
+      imageUrl: game.result === "won" ? imageUrl : null,
+    };
+    return resultRef.current;
+  }
+
+  function goToResults() {
+    if (!resultRef.current) return;
+    navigate("/game-over", { replace: true, state: resultRef.current });
   }
 
   // Win and lose checks run after every render (no dependency array),
   // so they always see the latest board and time. The hasRecorded ref
-  // inside finishGame keeps a game from being saved twice.
+  // inside recordResult keeps a game from being saved twice.
 
-  // Win: board solved.
+  // Win: save the result right away, but stay on the board to celebrate.
   useEffect(() => {
-    if (board.moves > 0 && isSolved(board.tiles)) {
-      finishGame({
+    if (isBoardSolved) {
+      recordResult({
         result: "won",
         mode: timed ? "timed" : "relaxed",
         level,
@@ -183,10 +196,21 @@ export default function Game() {
     }
   });
 
+  // After the celebration, move on to the results automatically.
+  useEffect(() => {
+    if (!isBoardSolved) return;
+    const timeoutId = setTimeout(() => {
+      if (resultRef.current) {
+        navigate("/game-over", { replace: true, state: resultRef.current });
+      }
+    }, SOLVED_DELAY_MS);
+    return () => clearTimeout(timeoutId);
+  }, [isBoardSolved, navigate]);
+
   // Lose: time ran out.
   useEffect(() => {
     if (timed && isExpired) {
-      finishGame({
+      const result = recordResult({
         result: "lost",
         mode: "timed",
         level,
@@ -194,6 +218,7 @@ export default function Game() {
         time: timeLimit,
         score: 0,
       });
+      if (result) navigate("/game-over", { replace: true, state: result });
     }
   });
 
@@ -225,17 +250,20 @@ export default function Game() {
   }
 
   const isPaused = gameStatus === "paused";
-  const imageUrl = useNumbers ? null : image?.url;
+  const solvedTime = timed ? timeLimit - timeRemaining : elapsed;
 
   return (
     <main className="game">
       <div className="game-header">
         <Link to="/">Quit to home</Link>
+        <span className={timed ? "mode-pill" : "mode-pill mode-pill--relaxed"}>
+          {timed ? "Timed" : "Relaxed"}
+        </span>
         <button
           type="button"
           className="button-secondary button-small"
           onClick={handleTogglePause}
-          disabled={gameStatus === "idle"}
+          disabled={gameStatus === "idle" || isBoardSolved}
         >
           {isPaused ? "Resume" : "Pause"}
         </button>
@@ -258,6 +286,7 @@ export default function Game() {
           size={size}
           imageUrl={imageUrl}
           onTileClick={handleMove}
+          solved={isBoardSolved}
         />
 
         {isPaused && (
@@ -271,13 +300,33 @@ export default function Game() {
         )}
       </div>
 
-      {gameStatus === "idle" && (
+      {isBoardSolved && (
+        <div className="solved-banner" role="status">
+          <div>
+            <h2>Solved!</h2>
+            <p>
+              {formatTime(solvedTime)} · {board.moves} moves
+            </p>
+          </div>
+          <button type="button" className="button-primary" onClick={goToResults}>
+            See results
+          </button>
+          {/* Fills over SOLVED_DELAY_MS to show when results will appear */}
+          <div
+            className="solved-countdown"
+            style={{ animationDuration: `${SOLVED_DELAY_MS}ms` }}
+            aria-hidden="true"
+          />
+        </div>
+      )}
+
+      {gameStatus === "idle" && !isBoardSolved && (
         <p className="hint">
           {timed ? "The timer starts on your first move." : "Relaxed mode: no time limit."}
         </p>
       )}
 
-      <div className="game-footer">
+      <div className="game-footer" hidden={isBoardSolved}>
         {imageUrl && (
           <button
             type="button"

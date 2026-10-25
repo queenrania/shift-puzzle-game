@@ -5,8 +5,10 @@ import { isAdjacent, getTileBackgroundPosition } from "../game/puzzle.js";
 // transform lets CSS animate the slide.
 //
 // If imageUrl is missing, tiles show their numbers instead (offline fallback).
-export default function GameBoard({ tiles, size, imageUrl, onTileClick }) {
+// When solved, the gaps close and the missing last piece fades in.
+export default function GameBoard({ tiles, size, imageUrl, onTileClick, solved = false }) {
   const emptyIndex = tiles.indexOf(0);
+  const lastValue = size * size;
 
   // value -> where that tile currently sits on the board
   const positions = tiles.map((value, index) => ({ value, index }))
@@ -20,15 +22,32 @@ export default function GameBoard({ tiles, size, imageUrl, onTileClick }) {
   }
 
   return (
-    <div className="board" style={{ "--size": size }}>
-      <div
-        className="tile-empty"
-        aria-hidden="true"
-        style={{ transform: placement(emptyIndex) }}
-      />
+    <div className={solved ? "board board--solved" : "board"} style={{ "--size": size }}>
+      {solved ? (
+        <div
+          className={imageUrl ? "tile tile--final" : "tile tile--final tile--number"}
+          aria-hidden="true"
+          style={{
+            transform: placement(emptyIndex),
+            ...(imageUrl && {
+              backgroundImage: `url(${imageUrl})`,
+              backgroundSize: `${size * 100}%`,
+              backgroundPosition: getTileBackgroundPosition(lastValue, size),
+            }),
+          }}
+        >
+          {!imageUrl && lastValue}
+        </div>
+      ) : (
+        <div
+          className="tile-empty"
+          aria-hidden="true"
+          style={{ transform: placement(emptyIndex) }}
+        />
+      )}
 
       {positions.map(({ value, index }) => {
-        const movable = isAdjacent(index, emptyIndex, size);
+        const movable = !solved && isAdjacent(index, emptyIndex, size);
         const classes = ["tile"];
         if (movable) classes.push("tile--movable");
         if (!imageUrl) classes.push("tile--number");
@@ -39,6 +58,7 @@ export default function GameBoard({ tiles, size, imageUrl, onTileClick }) {
             type="button"
             className={classes.join(" ")}
             onClick={() => onTileClick(index)}
+            disabled={solved}
             aria-label={movable ? `Tile ${value}, slide into empty space` : `Tile ${value}`}
             style={{
               transform: placement(index),
