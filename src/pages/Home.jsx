@@ -6,7 +6,8 @@ import usePlayer from "../hooks/usePlayer.js";
 import { GAME_TITLE, LEVELS } from "../config.js";
 
 export default function Home() {
-  const { playerName, setPlayerName, level, setLevel, timed, setTimed } = usePlayer();
+  const { playerName, setPlayerName, level, setLevel, timed, setTimed, stats } =
+    usePlayer();
 
   // Coming back to Home ends any puzzle in progress,
   // so Start always begins a fresh game.
@@ -84,8 +85,9 @@ export default function Home() {
         </div>
       </div>
 
-      <section className="how-to-play">
-        <h2>How to play</h2>
+      {/* Native accordion: open for first-time players, tucked away after that */}
+      <details className="how-to-play" open={stats.gamesPlayed === 0}>
+        <summary>How to play</summary>
         <ol>
           <li>Tap a tile next to the empty space, or use the arrow keys.</li>
           <li>In Timed mode, rebuild the picture before the clock runs out.</li>
@@ -93,7 +95,7 @@ export default function Home() {
           <li>Relaxed mode has no timer and isn’t scored.</li>
           <li>Press P or Escape to pause.</li>
         </ol>
-      </section>
+      </details>
 
       <div className="home-actions">
         <Link to="/game" className="button-primary">

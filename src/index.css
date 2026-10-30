@@ -431,15 +431,49 @@ button {
 }
 
 .how-to-play {
-  padding: 16px 18px;
+  padding: 14px 18px;
   border-radius: var(--radius-lg);
   background: var(--surface);
 }
 
-.how-to-play h2 {
-  margin: 0 0 8px;
+.how-to-play summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 24px;
+  list-style: none;
+  cursor: pointer;
+  font-family: var(--font-display);
   font-size: 15px;
+  font-weight: 700;
   color: var(--text-muted);
+}
+
+.how-to-play summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Chevron that points down when closed and flips up when open */
+.how-to-play summary::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 150ms ease;
+}
+
+.how-to-play[open] summary::after {
+  transform: translateY(2px) rotate(-135deg);
+}
+
+.how-to-play summary:hover {
+  color: var(--text);
+}
+
+.how-to-play[open] summary {
+  margin-bottom: 10px;
 }
 
 .how-to-play ol {
@@ -656,7 +690,7 @@ button {
 
 /* ---------- Logo ---------- */
 
-.logo-heading {
+.home-intro .logo-heading {
   margin: 0 0 12px;
 }
 
